@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Book — Product Lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EDE4;
+    --paper-2:#EAE2D3;
+    --ink:#241F1A;
+    --muted:#6B5E4F;
+    --stamp:#A32C1E;
+    --brass:#B08D57;
+    --line: rgba(36,31,26,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      radial-gradient(rgba(36,31,26,0.035) 1px, transparent 1px);
+    background-size: 4px 4px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 40px 20px 80px;
+  }
+  .wrap{
+    width:100%;
+    max-width:720px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 28px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 30px;
+    letter-spacing: -0.01em;
+    margin:0;
+  }
+  .tally{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .search-row{
+    position:relative;
+    margin-bottom: 30px;
+  }
+  .search-label{
+    position:absolute;
+    top:-10px;
+    left:14px;
+    background:var(--paper);
+    padding:0 6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--stamp);
+  }
+  #search{
+    width:100%;
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    font-style:italic;
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    padding: 16px 44px 16px 18px;
+    color:var(--ink);
+    outline:none;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  #search::placeholder{ color:#9c9184; font-style:italic; }
+  #search:focus{
+    box-shadow: 0 0 0 3px rgba(163,44,30,0.14);
+    border-color: var(--stamp);
+  }
+  .clear-btn{
+    position:absolute;
+    right:10px; top:50%; transform:translateY(-50%);
+    background:none;border:none;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--muted);
+    padding:6px 8px;
+    display:none;
+  }
+  .clear-btn.show{ display:block; }
+  .clear-btn:hover{ color:var(--stamp); }
+
+  .results{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .ticket{
+    position:relative;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius: 2px;
+    padding: 16px 18px 14px;
+    box-shadow: 0 1px 0 rgba(36,31,26,0.04);
+  }
+  .ticket::before{
+    content:"";
+    position:absolute;
+    top:-1px; left:0; right:0;
+    height:6px;
+    background-image: radial-gradient(circle at 6px 0, transparent 3px, #fff 3.5px);
+    background-size: 12px 6px;
+    background-repeat: repeat-x;
+  }
+  .ticket-name{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:17px;
+    line-height:1.3;
+    margin: 4px 0 10px;
+  }
+  .ticket-name mark{
+    background: rgba(176,141,87,0.35);
+    color:inherit;
+    border-radius:2px;
+    padding: 0 1px;
+  }
+  .ticket-meta{
+    display:flex;
+    gap:22px;
+    align-items:baseline;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  .meta-item .k{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    margin-right:8px;
+  }
+  .meta-item .v{
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    font-weight:500;
+  }
+  .v.null-val{
+    color: var(--stamp);
+    border: 1.5px solid var(--stamp);
+    border-radius: 3px;
+    padding: 1px 7px;
+    font-size:11px;
+    letter-spacing:0.06em;
+    transform: rotate(-2deg);
+    display:inline-block;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding: 50px 20px;
+    color: var(--muted);
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:16px;
+  }
+
+  .footnote{
+    margin-top: 34px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color: var(--muted);
+    text-align:center;
+    letter-spacing:0.02em;
+  }
+
+  @media (max-width:480px){
+    .ticket-meta{ gap:16px; flex-wrap:wrap; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Code Book</h1>
+      <span class="tally" id="tally">— entries</span>
+    </header>
+
+    <div class="search-row">
+      <span class="search-label">Search by name</span>
+      <input id="search" type="text" placeholder="Start typing a product name…" autocomplete="off">
+      <button class="clear-btn" id="clearBtn">clear ✕</button>
+    </div>
+
+    <div id="resultsArea"></div>
+
+    <div class="footnote">Read-only lookup. To add or edit entries, update the DATA array in this file.</div>
+  </div>
+
+<script>
+/* ============================================================
+   DATA — edit this array directly to add, remove, or change entries.
+   Each row is: { name: "...", code: "...", gng: "..." or null }
+   - name: string, up to 100 characters
+   - code: numeric string, up to 10 digits (always required)
+   - gng:  numeric string, up to 10 digits, OR null (the only field
+           allowed to be null)
+   No validation is performed at runtime — you are responsible for
+   keeping entries well-formed before committing this file.
+   ============================================================ */
+const DATA = [
+  { name: "Boar's Head Fryer's Deep Fried Turkey Breast", code: "151200", gng: null },
+  { name: "Home Chef Classic Seasoned Fresh Roasted Hot Chicken", code: "732274", gng: null },
+  { name: "Boar's Head Yellow American Cheese", code: "5070", gng: "1490" }
+];
+/* ============================================================ */
+
+function escapeHtml(str){
+  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function highlight(name, query){
+  if(!query) return escapeHtml(name);
+  const idx = name.toLowerCase().indexOf(query.toLowerCase());
+  if(idx === -1) return escapeHtml(name);
+  const before = escapeHtml(name.slice(0, idx));
+  const match = escapeHtml(name.slice(idx, idx + query.length));
+  const after = escapeHtml(name.slice(idx + query.length));
+  return `${before}<mark>${match}</mark>${after}`;
+}
+
+function renderTally(){
+  document.getElementById('tally').textContent = `${DATA.length} ${DATA.length === 1 ? 'entry' : 'entries'}`;
+}
+
+function renderResults(){
+  const query = document.getElementById('search').value.trim();
+  const area = document.getElementById('resultsArea');
+  const clearBtn = document.getElementById('clearBtn');
+  clearBtn.classList.toggle('show', query.length > 0);
+
+  const matches = query
+    ? DATA.filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
+    : DATA;
+
+  if(matches.length === 0){
+    area.innerHTML = `<div class="empty-state">No entries match “${escapeHtml(query)}.”</div>`;
+    return;
+  }
+
+  area.innerHTML = `<div class="results">${matches.map(e => `
+    <div class="ticket">
+      <div class="ticket-name">${highlight(e.name, query)}</div>
+      <div class="ticket-meta">
+        <div class="meta-item"><span class="k">Code</span><span class="v">${escapeHtml(e.code)}</span></div>
+        <div class="meta-item"><span class="k">GNG</span>${
+          e.gng === null || e.gng === '' || e.gng === undefined
+            ? '<span class="v null-val">null</span>'
+            : `<span class="v">${escapeHtml(e.gng)}</span>`
+        }</div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+document.getElementById('search').addEventListener('input', renderResults);
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('search').value = '';
+  renderResults();
+  document.getElementById('search').focus();
+});
+
+renderTally();
+renderResults();
+</script>
+</body>
+</html>
